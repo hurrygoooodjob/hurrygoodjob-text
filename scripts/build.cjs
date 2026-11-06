@@ -1,10 +1,10 @@
 const fs=require('node:fs'),path=require('node:path');
 const root=path.resolve(__dirname,'..'),dist=path.join(root,'dist');fs.mkdirSync(dist,{recursive:true});
 let html=fs.readFileSync(path.join(root,'index.html'),'utf8');
-html=html.replace('<link rel="stylesheet" href="src/styles.css">','<style>'+fs.readFileSync(path.join(root,'src/styles.css'),'utf8')+'</style>');
-html=html.replace('<link rel="stylesheet" href="src/mobile-editor.css">','<style>'+fs.readFileSync(path.join(root,'src/mobile-editor.css'),'utf8')+'</style>');
+html=html.replace('<link rel="stylesheet" href="src/styles.css?v=11">','<style>'+fs.readFileSync(path.join(root,'src/styles.css'),'utf8')+'</style>');
+html=html.replace('<link rel="stylesheet" href="src/mobile-editor.css?v=11">','<style>'+fs.readFileSync(path.join(root,'src/mobile-editor.css'),'utf8')+'</style>');
 const scripts=['model','projection','ring','contour','path','renderer','io','subject','boot','view-layout','mobile-editor','app'];
-for(const name of scripts) html=html.replace('  <script defer src="src/'+name+'.js"></script>','');
+for(const name of scripts) html=html.replace('  <script defer src="src/'+name+'.js?v=11"></script>','');
 html=html.replace('</body>','<script>window.KineticSampleData="data:image/png;base64,'+fs.readFileSync(path.join(root,'assets/sample.png')).toString('base64')+'";</script>\n'+scripts.map(name=>'<script>\n'+fs.readFileSync(path.join(root,'src',name+'.js'),'utf8').replace(/<\/script/gi,'<\\/script')+'\n</script>').join('\n')+'\n</body>');
 fs.writeFileSync(path.join(dist,'Hurrygoodjob-Text-v11.html'),html);
 fs.cpSync(path.join(root,'assets'),path.join(dist,'assets'),{recursive:true});
