@@ -1,0 +1,8 @@
+{
+  "file": "mediapipe-1.2.2/vision_bundle.mjs",
+  "beforeSHA256": "b65acb59b370cd6561afd9d04c29ed7a87e7ed6386922ac1b263af1f1ad06b7d",
+  "afterSHA256": "e40cab0d2059daa82f4cb0d4fa2468756b77e2175ae098fd5fbf4c07f6e90ea0",
+  "original": "function(t,e){e=e.runningMode??\"\";var r=t.h.Ta();t.o=new Mh(t.D(),e,r)}(t,n),",
+  "replacement": "void 0,/* HGJ local-only patch: disable optional usage logger initialization. */",
+  "purpose": "Disable default remote usage telemetry; no inference code changed."
+}

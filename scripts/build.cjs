@@ -1,0 +1,10 @@
+const fs=require('node:fs'),path=require('node:path');
+const root=path.resolve(__dirname,'..'),dist=path.join(root,'dist');fs.mkdirSync(dist,{recursive:true});
+let html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+html=html.replace('<link rel="stylesheet" href="src/styles.css">','<style>'+fs.readFileSync(path.join(root,'src/styles.css'),'utf8')+'</style>');
+const scripts=['model','projection','ring','contour','path','renderer','io','subject','boot','app'];
+for(const name of scripts) html=html.replace('  <script defer src="src/'+name+'.js"></script>','');
+html=html.replace('</body>','<script>window.KineticSampleData="data:image/png;base64,'+fs.readFileSync(path.join(root,'assets/sample.png')).toString('base64')+'";</script>\n'+scripts.map(name=>'<script>\n'+fs.readFileSync(path.join(root,'src',name+'.js'),'utf8').replace(/<\/script/gi,'<\\/script')+'\n</script>').join('\n')+'\n</body>');
+fs.writeFileSync(path.join(dist,'Hurrygoodjob-Text-v10.html'),html);
+fs.cpSync(path.join(root,'assets'),path.join(dist,'assets'),{recursive:true});
+console.log('Built editor HTML. Subject recognition requires the accompanying local assets folder over HTTP; basic editing and prepared masks are embedded.');

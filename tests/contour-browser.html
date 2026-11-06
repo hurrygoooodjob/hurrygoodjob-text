@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>v07 真实轮廓与平面螺旋渲染检查</title>
+<style>body{font:15px system-ui;background:#dddccb;color:#253026;margin:24px}h1{font-size:22px}main{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;max-width:1400px}figure{margin:0}canvas{width:100%;height:auto;background:#252d29;border-radius:12px}figcaption{padding:8px 0;font-weight:600}pre{white-space:pre-wrap;padding:16px;background:#f6f4eb;border-radius:8px}p{max-width:850px;line-height:1.6}</style>
+<h1>真实轮廓 / 同心轮廓 / 平面螺旋</h1><p>使用项目原有的虚构人像透明样图。文字路径从同一张透明主体的实际边界提取；第二张为两条向外偏移的轮廓。螺旋为连续的平面路径，内圈文字较小。</p>
+<main><figure><canvas id="single" width="600" height="800"></canvas><figcaption>沿主体轮廓 · 单环</figcaption></figure><figure><canvas id="multiple" width="600" height="800"></canvas><figcaption>沿主体轮廓 · 双环</figcaption></figure><figure><canvas id="spiral" width="600" height="800"></canvas><figcaption>平面螺旋 · 连续 3 圈</figcaption></figure></main><pre id="result">RUNNING</pre>
+<script src="../src/contour.js"></script><script>
+(async()=>{
+const results=[],img=new Image();img.src='../assets/sample.png';await img.decode();
+const mask=document.createElement('canvas');mask.width=600;mask.height=800;const m=mask.getContext('2d');
+const scale=Math.min(430/img.naturalWidth,650/img.naturalHeight),w=img.naturalWidth*scale,h=img.naturalHeight*scale;m.drawImage(img,(600-w)/2,(800-h)/2,w,h);
+function render(id,options){const display=document.getElementById(id),c=display.getContext('2d'),layer=document.createElement('canvas');layer.width=600;layer.height=800;const context=layer.getContext('2d');const start=performance.now();const stats=KineticContour.render(context,mask,options);const elapsed=performance.now()-start;c.fillStyle='#d6d2bf';c.fillRect(0,0,600,800);c.drawImage(mask,0,0);c.drawImage(layer,0,0);const pixels=context.getImageData(0,0,600,800).data;let visible=0;for(let i=3;i<pixels.length;i+=4)if(pixels[i]>20)visible++;results.push({id,waiting:stats.waiting,actualOutline:stats.usesSubjectOutline,paths:stats.paths.length,glyphs:stats.glyphCount,pixels:visible,renderMs:Math.round(elapsed),finite:stats.glyphs.every(g=>Number.isFinite(g.x)&&Number.isFinite(g.y)&&Number.isFinite(g.angle))});return stats;}
+const base={text:'HURRYGOODJOB • AROUND YOU',fontFamily:'Georgia, serif',fontWeight:400,fontSize:24,color:'#203528',gap:8,spacing:30};
+render('single',{...base,mode:'contour',count:1});render('multiple',{...base,mode:'contour',count:2,phase:.4});render('spiral',{...base,mode:'spiral',fontSize:42,centerX:300,centerY:370,radiusX:270,turns:3,color:'#19342b'});
+const pass=results.every(r=>!r.waiting&&r.pixels>100&&r.glyphs>20&&r.finite)&&results[0].paths===1&&results[1].paths===2&&results[2].paths===1;
+document.getElementById('result').textContent=JSON.stringify({pass,results},null,2);document.body.dataset.status=pass?'passed':'failed';
+})().catch(error=>{document.getElementById('result').textContent=error.stack;document.body.dataset.status='failed';});
+</script></html>

@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>v06 主体识别实际输出验收</title>
+<style>body{font:15px/1.6 system-ui;background:#ecebe4;color:#20291f;margin:24px}main{max-width:1100px;margin:auto}button{padding:12px 18px;min-height:44px}section{margin:20px 0;padding:18px;background:white;border:1px solid #bbc2b4}h1{font-size:24px}.views{display:flex;gap:16px;flex-wrap:wrap}.views figure{margin:0}.views canvas{width:200px;max-width:40vw;height:auto;display:block;background:#ddd}figcaption{font-size:12px}table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}th,td{text-align:left;padding:8px;border-bottom:1px solid #ddd}.pass{color:#24662d}.fail{color:#a53127}.note{font-size:13px}#status{min-height:2em}</style>
+<main><h1>主体识别：实际模型与像素结果</h1><p>使用项目已有虚构人像，在不透明灰底与分色背景上分别点选胸前和头部。原始透明人像的 alpha 是独立参考；模型只收到合成后的不透明照片，不会看到参考蒙版。</p><button id="run" type="button">运行真实模型检查</button><p id="status" role="status">等待运行</p><p class="note">通过条件：参考主体覆盖率 ≥ 65%，背景误选率 ≤ 15%，IoU ≥ 55%，预测区域 ≤ 全图90%。这些条件用于发现选成整图或只选小块的问题，不代表抠图精度承诺。</p><div id="results"></div><p id="summary"></p></main>
+<script defer src="../src/subject.js"></script>
+<script>
+window.addEventListener('DOMContentLoaded',()=>{
+ const $=id=>document.getElementById(id), W=480,H=640;
+ const configs=[
+  {name:'灰底 / 胸前点选',background:'gray',point:{x:.5,y:.46}},
+  {name:'灰底 / 头部点选',background:'gray',point:{x:.5,y:.14}},
+  {name:'分色背景 / 胸前点选',background:'split',point:{x:.5,y:.46}},
+  {name:'分色背景 / 头部点选',background:'split',point:{x:.5,y:.14}}
+ ];
+ const canvas=()=>Object.assign(document.createElement('canvas'),{width:W,height:H});
+ async function image(src){return new Promise((resolve,reject)=>{const im=new Image();im.onload=()=>resolve(im);im.onerror=()=>reject(new Error('测试素材无法读取'));im.src=src;});}
+ function figure(c,label){const f=document.createElement('figure'),caption=document.createElement('figcaption');caption.textContent=label;f.append(c,caption);return f;}
+ function metric(pred,truth){let tp=0,fp=0,fn=0,tn=0,head=0,headTP=0,body=0,bodyTP=0;for(let i=0;i<W*H;i++){const t=truth[i*4+3]>=128,p=pred[i*4+3]>=128,y=Math.floor(i/W)/H;if(t&&p)tp++;else if(p)fp++;else if(t)fn++;else tn++;if(t&&y<.28){head++;if(p)headTP++;}if(t&&y>=.28&&y<.8){body++;if(p)bodyTP++;}}
+ return {coverage:tp/(tp+fn||1),leak:fp/(fp+tn||1),iou:tp/(tp+fp+fn||1),area:(tp+fp)/(W*H),head:headTP/(head||1),body:bodyTP/(body||1),truthPixels:tp+fn,predictedPixels:tp+fp};}
+ const percent=n=>(n*100).toFixed(1)+'%';
+ $('run').addEventListener('click',async()=>{
+  $('run').disabled=true;$('results').replaceChildren();$('summary').textContent='';let passes=0, failures=0;const records=[];
+  try{
+   const im=await image('../assets/sample.png'),reference=canvas(),r=reference.getContext('2d',{willReadFrequently:true}),scale=Math.min(W/im.naturalWidth,H/im.naturalHeight),iw=im.naturalWidth*scale,ih=im.naturalHeight*scale;
+   r.drawImage(im,(W-iw)/2,(H-ih)/2,iw,ih);const truth=r.getImageData(0,0,W,H).data;
+   for(let index=0;index<configs.length;index++){
+    const config=configs[index],section=document.createElement('section'),title=document.createElement('h2'),status=document.createElement('p'),views=document.createElement('div');title.textContent=config.name;views.className='views';section.append(title,status,views);$('results').append(section);
+    const source=canvas(),c=source.getContext('2d');c.fillStyle=config.background==='gray'?'#c6c6c3':'#496470';c.fillRect(0,0,W,H);if(config.background==='split'){c.fillStyle='#dbd5ba';c.fillRect(W/2,0,W/2,H);c.fillStyle='#8a9783';c.fillRect(0,H*.75,W,H*.25);}c.drawImage(reference,0,0);views.append(figure(source,'模型输入：不透明照片'));
+    try{
+     const started=performance.now();const result=await KineticSubject.segment(source,config.point,{onProgress:text=>{$('status').textContent=(index+1)+' / '+configs.length+' · '+text;}});
+     const decoded=await image(result.dataURL),mask=canvas(),m=mask.getContext('2d',{willReadFrequently:true});m.drawImage(decoded,0,0,W,H);const values=metric(m.getImageData(0,0,W,H).data,truth),ok=values.coverage>=.65&&values.leak<=.15&&values.iou>=.55&&values.area<=.9;
+     views.append(figure(mask,'实际模型蒙版：白色为前景'));
+     const preview=canvas(),pc=preview.getContext('2d');pc.drawImage(source,0,0);pc.globalCompositeOperation='destination-in';pc.drawImage(mask,0,0);views.append(figure(preview,'实际蒙版截取的主体'));
+     const record={name:config.name,point:config.point,pass:ok,elapsedMs:Math.round(performance.now()-started),...values};records.push(record);ok?passes++:failures++;
+     status.textContent=(ok?'通过':'未通过')+' · 主体覆盖 '+percent(values.coverage)+' · 背景误选 '+percent(values.leak)+' · IoU '+percent(values.iou)+' · 全图占比 '+percent(values.area)+' · 头部覆盖 '+percent(values.head)+' · 身体覆盖 '+percent(values.body)+' · '+record.elapsedMs+' ms';status.className=ok?'pass':'fail';
+     section.dataset.result=ok?'pass':'fail';section.dataset.metrics=JSON.stringify(record);
+    }catch(error){failures++;status.textContent='失败：'+error.message;status.className='fail';section.dataset.result='error';records.push({name:config.name,pass:false,error:error.message});}
+   }
+   $('status').textContent='检查完成';$('summary').textContent=passes+' / '+configs.length+' 通过，'+failures+' 项未通过。';$('summary').dataset.results=JSON.stringify(records);
+  }catch(error){$('status').textContent='无法完成检查：'+error.message;}
+  finally{KineticSubject.dispose();$('run').disabled=false;}
+ });
+});
+</script></html>

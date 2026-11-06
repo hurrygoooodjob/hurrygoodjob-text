@@ -1,0 +1,14 @@
+{
+  "name": "hurrygoodjob-text",
+  "version": "10.0.0",
+  "private": true,
+  "description": "Local-first image typography studio with an instrument interface, 3D wrap and point-guided subject masks.",
+  "scripts": {
+    "start": "node scripts/serve.cjs",
+    "build": "node scripts/build.cjs",
+    "test": "node --test tests/*.test.cjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
