@@ -1,6 +1,6 @@
 {
   "name": "hurrygoodjob-text",
-  "version": "10.0.0",
+  "version": "11.0.0",
   "private": true,
   "description": "Local-first image typography studio with an instrument interface, 3D wrap and point-guided subject masks.",
   "scripts": {

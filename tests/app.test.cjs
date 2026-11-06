@@ -18,6 +18,7 @@ function harness(overrides={}){
   const M=window.KineticModel;window.KineticPath=require(root+'/src/path.js');
   window.KineticIO={MAX_PROJECT_BYTES:64000000,loadImage:async file=>({dataURL:data(file.name),name:file.name,image:{width:100,height:100}}),decodeImage:async()=>({width:100,height:100}),decodeImages:async assets=>assets.map(()=>({width:100,height:100})),parse:json=>M.normalize(JSON.parse(json).state),serialize:s=>JSON.stringify({state:M.normalize(s)}),saveDraft:async()=>({ok:true}),loadDraft:async()=>null,canExportVideo:()=>true,canShareFile:()=>false,download:(blob,name)=>downloads.push({blob,name}),...overrides.io};
   if(overrides.subject)window.KineticSubject={...window.KineticSubject,...overrides.subject};
+  vm.runInContext(fs.readFileSync(root+'/src/view-layout.js','utf8'),context);
   vm.runInContext(fs.readFileSync(root+'/src/app.js','utf8'),context);
   const el=id=>elements.get(id);
   async function upload(names){el('fileInput').files=names.map(name=>({name}));el('fileInput').emit('change');await settle();}
@@ -92,9 +93,40 @@ test('ASCII shortcut is under preview and opens only its compact parameter page'
 test('setup ratio and fit are retained into editor; removing the last photo remains undoable',async()=>{const h=harness();try{h.el('canvasRatio').value='1080x1080';h.el('canvasRatio').emit('change');h.el('imageFit').value='contain';h.el('imageFit').emit('change');await h.upload(['photo']);assert.equal(h.el('startScreen').hidden,false);h.el('continueEditing').click();const saved=await h.saved();assert.equal(saved.width,1080);assert.equal(saved.height,1080);assert.equal(saved.imageFit,'contain');h.el('backStart').click();const remove=h.el('photoList').querySelectorAll('button').find(b=>b.textContent==='移除');remove.click();await settle();assert.equal(h.el('continueEditing').disabled,true);assert.equal(h.el('setupUndo').disabled,false);h.el('setupUndo').click();await settle();assert.equal(h.el('startScreen').hidden,false);assert.equal((await h.saved()).images.length,1);}finally{h.cleanup();}});
 test('parameter and style tabs support arrow-key navigation',()=>{const h=harness();try{h.el('tabLayout').emit('keydown',{key:'ArrowRight'});assert.equal(h.el('panelStyle').hidden,false);assert.equal(h.document.activeElement,h.el('tabStyle'));h.el('styleBasic').emit('keydown',{key:'End'});assert.equal(h.el('stylePanelShadow').hidden,false);}finally{h.cleanup();}});
 test('dragging numeric controls neither rebuilds photos nor reflows the preview each input',async()=>{const h=harness();try{await h.upload(['photo']);h.el('continueEditing').click();const card=h.el('photoList').children[0];let reads=0;h.el('previewViewport').getBoundingClientRect=()=>{reads++;return{left:0,top:0,width:340,height:400};};for(let i=0;i<30;i++){h.el('wrapRoll').value=String(i);h.el('wrapRoll').emit('input');}h.paint();assert.equal(reads,0);assert.equal(h.el('photoList').children[0],card);assert.equal((await h.saved()).ringGroups[0].roll,29);}finally{h.cleanup();}});
-test('preview resolution follows visible size and zoom without changing export dimensions',async()=>{const h=harness();try{await h.upload(['photo']);h.el('continueEditing').click();const canvas=h.el('posterCanvas'),initial=canvas.height;h.el('zoomIn').click();h.el('zoomIn').click();assert.ok(canvas.height>initial);assert.ok(canvas.height<=900);const saved=await h.saved();assert.equal(saved.width,900);assert.equal(saved.height,1200);}finally{h.cleanup();}});
+test('preview resolution follows visible size and zoom without changing export dimensions',async()=>{const h=harness();try{await h.upload(['photo']);h.el('continueEditing').click();h.paint();const canvas=h.el('posterCanvas'),initial=canvas.height;h.el('zoomIn').click();h.el('zoomIn').click();assert.equal(canvas.height,initial,'the old frame remains visible until the next render, with no intermediate canvas clear');h.paint();assert.ok(canvas.height>initial);assert.ok(canvas.height<=900);const saved=await h.saved();assert.equal(saved.width,900);assert.equal(saved.height,1200);}finally{h.cleanup();}});
 
-test('visual viewport classes follow available keyboard height without changing the document',async()=>{const h=harness();try{await h.upload(['photo']);h.el('continueEditing').click();const before=await h.saved();h.window.innerWidth=390;h.window.innerHeight=844;h.window.visualViewport={width:390,height:640};h.resizeViewport();assert.equal(h.document.body.classList.contains('viewport-short'),true);assert.equal(h.document.body.classList.contains('viewport-keyboard'),false);h.window.visualViewport.height=360;h.resizeViewport();assert.equal(h.document.body.classList.contains('viewport-short'),false);assert.equal(h.document.body.classList.contains('viewport-keyboard'),true);h.paint();assert.equal(h.document.body.classList.contains('viewport-keyboard'),true);h.window.visualViewport.height=844;h.resizeViewport();assert.equal(h.document.body.classList.contains('viewport-keyboard'),false);assert.deepEqual(await h.saved(),before);}finally{h.cleanup();}});
+test('keyboard layout requires text focus and a reduced viewport, not simply a short phone or landscape',async()=>{
+ const h=harness();try{
+   await h.upload(['photo']);h.el('continueEditing').click();const before=await h.saved();
+   h.window.innerWidth=390;h.window.innerHeight=844;h.window.visualViewport={width:390,height:844,scale:1};h.resizeViewport();h.paint();
+   h.window.visualViewport.height=640;h.resizeViewport();h.paint();assert.equal(h.document.body.classList.contains('viewport-short'),true);assert.equal(h.document.body.classList.contains('viewport-keyboard'),false);
+   h.window.visualViewport.height=360;h.resizeViewport();h.paint();assert.equal(h.document.body.classList.contains('viewport-keyboard'),false,'a short viewport alone is not a keyboard');
+   h.window.visualViewport.height=844;h.resizeViewport();h.paint();h.document.activeElement=h.el('textInput');h.window.visualViewport.height=360;h.resizeViewport();h.paint();assert.equal(h.document.body.classList.contains('viewport-keyboard'),true);h.paint();assert.equal(h.document.body.classList.contains('viewport-keyboard'),true);
+   h.document.activeElement=null;h.resizeViewport();h.paint();assert.equal(h.document.body.classList.contains('viewport-keyboard'),false,'leaving text input exits keyboard layout');
+   h.window.visualViewport.height=844;h.resizeViewport();h.paint();assert.equal(h.document.body.classList.contains('viewport-keyboard'),false);
+   h.window.innerWidth=844;h.window.innerHeight=390;h.window.visualViewport={width:844,height:390,scale:1};h.resizeViewport();h.paint();assert.equal(h.document.body.classList.contains('viewport-keyboard'),false,'landscape without text focus is not a keyboard');
+   assert.deepEqual(await h.saved(),before);
+ }finally{h.cleanup();}
+});
+test('text editing restores the original zoom and pan after intermediate keyboard-close resizes',async()=>{
+ let callbacks;
+ const h=harness({window:{innerWidth:390,innerHeight:844,visualViewport:{width:390,height:844,scale:1,addEventListener(){}},KineticMobileEditor:{create(options){callbacks=options;return{sync(){},isActive:()=>true,closeText(){},setDetail(){},destroy(){}};}}}});
+ try{
+   await h.upload(['photo']);h.el('continueEditing').click();h.paint();h.el('zoomIn').click();h.el('zoomIn').click();
+   const viewport=h.el('previewViewport'),target=h.el('posterCanvas');
+   viewport.emit('pointerdown',{target,clientX:100,clientY:100});viewport.emit('pointermove',{target,clientX:130,clientY:130});viewport.emit('pointerup',{target,clientX:130,clientY:130});
+   const before=h.el('canvasMount').style.transform;
+   h.document.activeElement=h.el('textInput');callbacks.onTextEdit(true);h.window.visualViewport.height=360;viewport.clientHeight=160;h.resizeViewport();h.paint();
+   h.document.activeElement=null;callbacks.onTextEdit(false);h.paint();
+   h.window.visualViewport.height=400;viewport.clientHeight=180;h.resizeViewport();h.paint();
+   h.window.visualViewport.height=500;viewport.clientHeight=240;h.resizeViewport();h.paint();
+   h.window.visualViewport.height=844;viewport.clientHeight=400;h.resizeViewport();h.paint();
+   assert.equal(h.el('zoomLabel').textContent,'150%');
+   const numbers=transform=>transform.match(/-?\d+(?:\.\d+)?/g).map(Number);
+   const actual=numbers(h.el('canvasMount').style.transform),expected=numbers(before);
+   actual.forEach((value,index)=>assert.ok(Math.abs(value-expected[index])<.01,'view center and magnification survive keyboard animation'));
+ }finally{h.cleanup();}
+});
 
 function effect(h,value){h.el('effectSelect').value=value;h.el('effectSelect').emit('change');}
 function drawStroke(h,points,pointerId=1,ending='pointerup') {const viewport=h.el('previewViewport'),target=h.el('posterCanvas');viewport.emit('pointerdown',{target,pointerId,clientX:points[0][0],clientY:points[0][1]});for(const point of points.slice(1))viewport.emit('pointermove',{target,pointerId,clientX:point[0],clientY:point[1]});const last=points.at(-1);viewport.emit(ending,{target,pointerId,clientX:last[0],clientY:last[1]});h.paint();}

@@ -1,0 +1,93 @@
+/* v11: phone editing keeps the artwork visible while the current controls change. */
+.mobile-dock,.mobile-canvas-tools{display:none}
+@media(max-width:600px){
+ body.editor-active.mobile-editor{padding:max(4px,env(safe-area-inset-top)) max(4px,env(safe-area-inset-right)) max(4px,env(safe-area-inset-bottom)) max(4px,env(safe-area-inset-left));overscroll-behavior:none}
+ .mobile-editor.editor-active .instrument{padding:6px;max-width:none;border-radius:17px;min-height:0}
+ .mobile-editor.editor-active .masthead,.mobile-editor.editor-active .status-message,.mobile-editor.editor-active .panel-footer{display:none}
+ .mobile-editor.editor-active .top-actions{height:44px;min-height:44px;flex:none;margin:0 0 6px;padding:0;gap:4px}
+ .mobile-editor.editor-active .top-actions .small-button{min-height:44px;min-width:44px;padding:4px 7px;font-size:11px}
+ .mobile-editor.editor-active .top-actions #backStart{margin-right:auto}
+ .mobile-editor.editor-active .top-actions #projectMenuButton{position:static;width:44px;min-width:44px;min-height:44px;padding:4px;font-size:11px}
+ .mobile-editor.editor-active .history-actions{gap:4px}
+ .mobile-editor.editor-active .editor-grid{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto;gap:6px;min-height:0}
+ .mobile-editor.editor-active .display-column{display:flex;flex-direction:column;gap:4px;min-height:0}
+ .mobile-editor.editor-active .editor-bezel{padding:3px;border-radius:13px;min-height:0;flex:1}
+ .mobile-editor.editor-active .preview-viewport{min-height:0!important;border-radius:9px}
+ .mobile-editor.editor-active .view-tools,.mobile-editor.editor-active .ascii-strip,.mobile-editor.editor-active .subject-status{display:none!important}
+ .mobile-editor.editor-active .control-column,.mobile-editor.editor-active.detail-view .control-column{display:block;height:auto;min-height:0;padding:6px;border-radius:10px;overflow:visible;flex:none}
+ .mobile-editor.editor-active .control-column>.text-workspace,.mobile-editor.editor-active .control-column>.parameter-tabs,.mobile-editor.editor-active .control-column>.parameter-panels{display:none!important}
+ .mobile-editor .mobile-dock{display:flex;flex-direction:column;gap:4px;min-width:0}
+ .mobile-main-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.8fr) minmax(0,.9fr) 44px;gap:4px;height:44px;min-height:44px}
+ .mobile-dock:not(.is-grouped) .mobile-main-row{grid-template-columns:minmax(0,1fr) minmax(0,1.2fr)}
+ .mobile-main-row>*{min-width:0}
+ .mobile-main-row select{width:100%;height:44px;min-height:44px;font-size:16px;padding:4px 18px 4px 5px;text-overflow:ellipsis}
+ .mobile-group-slot{position:relative}
+ .mobile-group-slot::after{content:"";position:absolute;right:8px;top:17px;width:6px;height:6px;border-right:1px solid #435238;border-bottom:1px solid #435238;transform:rotate(45deg);pointer-events:none}
+ .mobile-group-slot select{appearance:none;padding-right:18px}
+ .mobile-main-row .small-button{min-height:44px;padding:2px 6px;min-width:0}
+ .mobile-main-row .mobile-group-menu{font-size:21px;min-width:44px}
+ .mobile-text-summary{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;overflow:hidden;background:linear-gradient(#cfd0bd,#b8bfa5);color:#33442b;border-color:#8e997b;box-shadow:inset 0 1px #e7ead6,0 1px #858f73}
+ .mobile-summary-label{font-size:10px;line-height:13px;opacity:.8}
+ .mobile-summary-copy{display:block;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;line-height:19px}
+ .mobile-detail-select,.mobile-detail-effect{display:none}
+ .mobile-bank-nav{display:grid;grid-template-columns:minmax(74px,.65fr) minmax(0,1.35fr);gap:5px;min-height:44px;height:44px}
+ .mobile-bank-nav select{height:44px;min-height:44px;font-size:16px;padding:4px 24px 4px 8px}
+ .mobile-bank-nav .mobile-category-select{background:linear-gradient(#546b3f,#3d532e);color:#f1f3e1;border-color:#71815d;box-shadow:inset 0 1px #849871}
+ .mobile-bank-nav .mobile-category-select option{background:#d9dcc8;color:#2f3b29}
+ .mobile-control-tray{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;align-items:start;height:76px;min-height:76px;padding-top:5px}
+ .mobile-control-tray>.dial-control,.mobile-control-tray>.field{font-size:10px;gap:4px;margin:0;min-height:64px}
+ .mobile-control-tray .dial-control>span{gap:3px;min-height:16px;line-height:16px}
+ .mobile-control-tray .dial-control output{font-size:10px}
+ .mobile-control-tray .dial-control input[type=range]{height:44px;min-height:44px;touch-action:none}
+ .mobile-control-tray .field select,.mobile-control-tray .field input[type=text]{font-size:16px;padding-left:5px;padding-right:18px}
+ .mobile-control-tray>.switch{min-height:64px;height:64px;flex-direction:column;font-size:11px;border-radius:12px;padding:4px 2px;gap:5px}
+ .mobile-control-tray>.small-button{margin-top:20px;min-height:44px;padding:4px 7px}
+ .mobile-editor .mobile-canvas-tools{display:grid;grid-template-columns:52px 44px 44px 44px minmax(48px,1fr) 44px;gap:4px;min-height:44px;height:44px;align-items:stretch;flex:none}
+ .mobile-canvas-tools.without-context{grid-template-columns:52px 44px 44px 44px minmax(44px,1fr)}
+ .mobile-canvas-tools .small-button{min-width:0;width:100%;min-height:44px;padding:3px 2px;font-size:11px;margin:0!important}
+ .mobile-canvas-tools .mobile-context-slot{min-width:0}
+ .mobile-canvas-tools .mobile-ascii-slot>.switch{gap:3px;margin:0;min-height:44px;font-size:10px;background:#c9ceb95c;border:1px solid #899778;border-radius:8px;padding:0 3px}
+ .mobile-canvas-tools .mobile-ascii-slot input{width:16px;height:16px}
+ .mobile-canvas-tools #zoomReset{font-size:11px}
+ .mobile-text-sheet{display:flex;flex-direction:column;gap:4px;min-width:0}
+ .mobile-text-heading{display:flex;justify-content:space-between;align-items:center;gap:8px;height:44px}
+ .mobile-text-title{font-size:12px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+ .mobile-text-heading .small-button{min-width:64px;min-height:44px}
+ .mobile-text-sheet textarea{font-size:16px;height:52px;min-height:52px;max-height:52px;padding:8px;line-height:24px;scroll-margin:0}
+ .mobile-editor.mobile-text-edit .mobile-main-row,.mobile-editor.mobile-text-edit .mobile-bank-nav,.mobile-editor.mobile-text-edit .mobile-control-tray{display:none}
+ .mobile-editor.mobile-text-edit .mobile-canvas-tools{display:none}
+ .mobile-editor.editor-active.viewport-keyboard .editor-grid{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto}
+ .mobile-editor.editor-active.viewport-keyboard .top-actions{display:none}
+ .mobile-editor.editor-active.viewport-keyboard .preview-viewport{min-height:0!important}
+ .mobile-editor.mobile-detail .mobile-bank-nav,.mobile-editor.mobile-detail .mobile-effect-slot,.mobile-editor.mobile-detail .mobile-text-summary,.mobile-editor.mobile-detail .mobile-group-menu{display:none}
+ .mobile-editor.mobile-detail .mobile-main-row,.mobile-editor.mobile-detail .mobile-dock:not(.is-grouped) .mobile-main-row{grid-template-columns:minmax(0,.8fr) minmax(0,1.5fr)}
+ .mobile-editor.mobile-detail .mobile-detail-select{display:block;font-size:16px}
+ .mobile-editor.mobile-detail .mobile-detail-effect{display:flex;align-items:center;font-size:12px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;padding:0 6px;border:1px solid #929680;background:#ccd1b9;border-radius:7px}
+ .mobile-editor.mobile-detail .mobile-control-tray{grid-template-columns:minmax(0,1fr);height:64px;min-height:64px;padding-top:0}
+ .mobile-editor.mobile-detail .mobile-control-tray>.dial-control{grid-template-columns:minmax(80px,.8fr) minmax(0,1.5fr);align-items:center;height:64px}
+ .mobile-editor.mobile-detail .mobile-control-tray>.dial-control>span{display:flex;flex-direction:column;gap:3px;font-size:11px;line-height:16px;white-space:normal}
+ .mobile-editor.mobile-detail .mobile-control-tray>.dial-control output{font-size:12px}
+ .mobile-editor.mobile-detail .mobile-control-tray>.field{grid-template-columns:minmax(80px,.8fr) minmax(0,1.5fr);align-items:center;gap:5px}
+ .mobile-editor.mobile-detail .mobile-control-tray>.field>span{font-size:12px;line-height:18px}
+ .mobile-editor.mobile-detail .mobile-control-tray>.switch{flex-direction:row;justify-content:flex-start;padding:8px 12px;font-size:12px}
+ .mobile-editor.mobile-detail .mobile-control-tray>.small-button{margin-top:10px}
+ .mobile-group-dialog{max-width:360px}
+ .mobile-group-dialog .mobile-group-name{margin:12px 0}
+ .mobile-group-dialog .field>span{text-align:left;font-size:12px}
+ .mobile-group-dialog input[type=text]{font-size:16px}
+ .mobile-group-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+ .mobile-group-actions .small-button{min-height:44px;font-size:12px}
+ .mobile-editor.path-drawing .control-column,.mobile-editor.path-drawing .mobile-canvas-tools{display:none!important}
+ .mobile-editor.path-drawing .editor-grid{grid-template-columns:1fr!important;grid-template-rows:minmax(0,1fr)!important}
+ .mobile-editor.path-drawing .view-tools{display:none!important}
+ .mobile-editor.path-drawing .path-draw-bar{margin-top:4px;flex:none}
+ .mobile-editor.path-drawing .display-column{min-height:0}
+}
+@media(max-width:360px){
+ .mobile-editor .mobile-canvas-tools{gap:2px;grid-template-columns:48px 44px 44px 44px minmax(44px,1fr) 44px}
+ .mobile-editor .mobile-canvas-tools.without-context{grid-template-columns:48px 44px 44px 44px minmax(44px,1fr)}
+ .mobile-editor .mobile-main-row{grid-template-columns:minmax(0,1fr) minmax(0,.75fr) minmax(0,.75fr) 44px;gap:3px}
+ .mobile-editor .mobile-control-tray{gap:5px}
+ .mobile-editor .mobile-control-tray>.dial-control{font-size:9px}
+ .mobile-editor .mobile-control-tray .dial-control output{font-size:9px}
+}
